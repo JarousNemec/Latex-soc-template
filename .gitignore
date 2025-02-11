@@ -1,0 +1,13 @@
+/.idea/.gitignore
+/out/document.aux
+/out/document.bcf
+/out/document.lof
+/out/document.log
+/out/document.lolistedequation
+/out/document.lot
+/out/document.out
+/out/document.run.xml
+/out/document.synctex.gz
+/out/document.toc
+/.idea/encodings.xml
+/.idea/vcs.xml
