@@ -1,0 +1,120 @@
+﻿\externaldocument{text-02-teoreticka}
+
+
+\chapter{Praktická část}\label{ch:prakticka-cast}
+Tato část práce předvede čtenáři konkrétní realizaci myšlenky probírané v této prácí.
+Zárověň v se v ní čtenář dozví jak v praxi využít poznatky nabyté v teoretické části.
+
+
+\section{Rozvržení person}\label{sec:rozvrzeni-person}
+Před tím než se započne tvorba jakékoli aplikace, je třeba určit, pro koho danou aplikaci tvoříme a jak bychom chtěli, aby jí tento uživatel používal.
+V našem případě jde o to, že systém by měl být schopný používat člověk znalý v chovu hospodářských zvířat, ale často méně zdatný v používání informačních technologií a mobilních aplikací.
+Na základě toho, že už víme, kdo je cílový uživatel můžeme se zamýšlet jakou funkcionalitu do řešení implementovat.
+Jedná se tedy o to, aby aplikace umožňovala uživateli vzdálený dohled na jeho chov a pomáhala mu šetřit čas zautomatizováním každodenních činnosti.
+Rozhodlo se tedy, že aplikace bude uživateli poskytovat následující funkce
+\begin{itemize}
+    \item Vzdálený přístup zkrze internet odkudkoli
+    \item Pohledy z bezpečnostních kamer ve vnitřním i venkovním výběhu
+    \item Dálkové ovládání a automatizace světla a bezpečnostních dvířek v kurníku
+    \item Intuitivní vizualizace stavů jednotlivých hnízd(sedící slepice, v opačném případě počet vajec)
+    \item Automatické upozornění notifikacemi v telefonu na vetřelce ve výběhu
+    \item Vizualizace aktuálních povětrnostních podmínek v kurníku (teplota a vlhkost)
+\end{itemize}
+
+
+\section{Návrh architektury a volba technologií}\label{sec:navrh-architektury-a-volba-technologii}
+Díky tomu, že si přesně určíme, kdo je cílový uživatel naší aplikace, a k tomu dáme do hromady, co uživatel od naší aplikace očekává.
+Jsme nyní schopni bez větších problémů teoreticky navrhnout architekturu našeho systému a přesně popsat požadovanou funkcionalitu, jakou budou disponovat jeho jednotlivé části.
+Celý ekosystém se skládá z několika samostatných celků
+\begin{itemize}
+    \item Fyzická zařízení jako kamery a senzory
+    \item Backend systému obsahující hlavní funkcionalitu(sekce~\ref{sec:backend})
+    \item GUI(sekce~\ref{sec:gui})
+    \item Moduly pro komunikaci mezi GUI a Backendem
+    \item Modul pro propagaci a zpřístupnění aplikace z internetu
+\end{itemize}
+
+\subsection{Backend}\label{subsec:backend}
+Jako teoretický model na základě kterého, budeme organizovat backend a třídit jeho funkcionalitu, jsem zvolil mikroservisní architekturu(sekce~\ref{sec:microservice-architecture}).
+Tento způsob rozvržení zodpovědnosti jednotlivých částí systému jsem zvolil, kvůli velké možnosti rozšíření, zapouzdření funkcionality a snadné úpravě jednotlivých služeb bez nutnosti kompletního restartu systému případně znovunasazení.
+Služby jsou psány v programovacím jazyce Python(sekce~\ref{sec:ipcamera-rtsp}) a využívají jeho knihovny.
+%Mezi hlavní patří knihovny
+%\begin{itemize}
+%    \item Flask(sekce~\ref{sec:flask})
+%    \item Paho-mqtt(sekce~\ref{sec:paho-mqtt})
+%    \item Python-dotenv(sekce~\ref{sec:python-dotenv})
+%    \item APScheduler(sekce~\ref{sec:apscheduler})
+%    \item Pyserial(sekce~\ref{sec:pyserial})
+%\end{itemize}
+Na základě určeného způsobu zapouzdření funkcionality je funkcionalita backendu rozdělena do následujících služeb, které jsou pojmenovány dle jejich účelu
+\begin{itemize}
+    \item Camera driver
+    \item Scale driver
+    \item Room driver
+    \item Health checker
+    \item Room assistant
+    \item Nest watcher
+    \item Dog alarm
+    \item Chicken watch guard
+\end{itemize}
+
+\subsubsection{Camera driver}
+Camera driver je služba zodpovědná za komunikaci s ip kamerou(sekce~\ref{sec:ipcamera-rtsp}).\newline
+S ní komunikuje pomocí protokolu RTSP(sekce~\ref{sec:ipcamera-rtsp}).
+Url ip kamery, k níž je driver přiřazen, je službě předávána pomocí envirnoment proměnných(sekce~\ref{sec:environment-variables}).
+Pro komunikaci se zbytkem backendu poskytuje služba své REST(sekce~\ref{sec:http-rest}) api.
+Konkrétně při zavolání na endpoint driver stáhne nejnovější obrázek z kamery a vrátí ho jako odpověď na volání.
+%\begin{itemize}
+%    \item GET /api/image
+%\end{itemize}
+
+\subsubsection{Scale driver}
+Scale driver zodpovídá za komunikaci mezi fyzickou váhou a službami, které využívají data o vážení.\newline
+Protože jako řídící jednotka váhy je použito Arduino(\ref{sec:arduino}) tento modul komunikuje přes serialový port pomocí protokolu USB a na dotaz přijmutý RESTovým api poskytne jako odpověď hodnotu načtenou z váhy.
+Pro služby v systému tento driver poskytuje data o hmotnosti opět pomocí REST api.
+%\begin{itemize}
+%    \item GET /api/weight
+%\end{itemize}
+
+\subsubsection{Room driver}
+Room driver zařizuje komunikaci mezi ostatnímy službami a řídící jednotkou v kurníku, která ovládá dveře a světlo.\newline
+Jako mozek řídící jednotky je použito opět Arduino a tomu je třeba přizpůsobyt architekturu služby.
+Tento modul má tedy za úkol přes serialový port pomocí protokolu USB posílat příkazy a načítat stavy řídící jednotky na základě requestů příchozích na REST api služby.
+Pro služby v systému služba na vystavuje GET a POST endpointy
+%\begin{itemize}
+%    \item GET /api/temperature (dej teplotu)
+%    \item GET /api/humidity (dej vlhkost)
+%    \item GET /api/lamp/state (dej stav světla vypnuto/zapnuto)
+%    \item GET /api/door/state (dej pozici dvířek otevřeno/zavřeno)
+%    \item POST /api/lamp/on (rozsviť)
+%    \item POST /api/lamp/off (zhasni)
+%    \item POST /api/door/open (otevři)
+%    \item POST /api/door/close (zavři)
+%\end{itemize}
+
+\subsubsection{Health checker}
+Health checker je malá služba určená pro správce systému.\newline
+Poskytuje informace o tom zda všechny potřebné služby běží, aby správce nebyl nucen přihlašovat se vzdáleně na server a manuálně kontrolovat každou službu.
+Výpis stavů jednotlivých služeb je poskytován RESTovým api [GET] /status
+%\begin{itemize}
+%    \item GET /status
+%\end{itemize}
+
+\subsubsection{Room assistant}
+Room assistant je zpřístupňuje komunikaci mezi GUI tedy konkrétně Home Assistantem a Room driverem.\newline
+S Home Assistantem je komunikace realizována pomocí MQTT(\ref{sec:mqtt}) a s Room driverem pomocí HTTP(\ref{sec:http-rest}) protokolu.
+Základní funkcí je zpracování a přeposlání příkazů do Room Driveru odebíraných z témat
+%\begin{itemize}
+%    \item coopmaster/room/door/cmnd
+%    \item coopmaster/room/lamp/cmnd
+%\end{itemize}
+Služba očekává, že na tato témata budou chodit zprávy open / close pro dveře a on / off jako příkazy pro světlo.
+Další úlohou je periodické načítání a aktualizace informací o stavu dveří, světla a dat z teplotního a vlhkostního senzorů.
+Tato data by měl Room assistant pravidelně načítat a posílat přes MQTT do Home Assistanta.
+%\begin{itemize}
+%    \item coopmaster/room/temperature
+%    \item coopmaster/room/humidity
+%    \item coopmaster/room/door/state
+%    \item coopmaster/room/lamp/state
+%\end{itemize}
+

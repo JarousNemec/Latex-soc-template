@@ -1,0 +1,77 @@
+\documentclass{template/socthesis}
+
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+\addbibresource{text.bib}
+
+\titlecz{Coopmaster - systém pro kontrolu a automatizaci kurníku}
+\titleen{Coopmaster - system for coop control and automation}
+\author{Jaroslav Němec}
+\field{18}
+\school{Střední škola a vyšší odborná škola aplikované kybernetiky}
+\mentor{Ing. David Podzimek}
+\mentorstatement{Ing. Davida Podzimka}
+\newcommand{\mentorthanks}{Ing. Davidu Podzimkovi}
+
+\begin{document}
+
+    \maketitle
+
+    \makecopyrightstatement{V~Hradci Králové}
+
+    \makethanks{Děkuji svému školiteli \mentorthanks{} za obětavou pomoc, podnětné připomínky a nekonečnou trpělivost, kterou mi během práce poskytoval.}
+
+    \pagestyle{empty}
+
+    \section*{Anotace}
+    Ve své práci jsem se zabýval návrhem a realizací kompletního řešení pro malé i střední zemědělce a hospodáře, které má pomoci plnit běžné činnosti.
+    Cílem této práce bylo vytvořit a realizovat systém pro kontrolu a automatizaci chovu hospodářských zvířat.
+
+    \subsection*{Klíčová slova}
+    programování, automatizace, zemědělství, neuronové sítě, python, mikroservisní architektura
+
+    \vspace{20mm}
+
+    \section*{Annotation}
+    In my work, I have been involved in the design and implementation of a complete solution for small and medium farmers and homesteaders to help them carry out their day-to-day activities.
+    The aim of this work was to design and implement a system for control and automation of livestock farming.
+
+    \subsection*{Keywords}
+    programming, automation, agriculture, neural networks, python, microservice architecture
+
+    \pagestyle{plain}
+
+    \tableofcontents % vysází obsah
+
+    %%% Začátek práce
+    \setcounter{figure}{0}
+    \setcounter{table}{0}
+%    \newpage
+
+    %%% Úvod
+    \input{text-01-uvod}
+
+    \input{text-02-teoreticka}
+
+    \input{text-03-prakticka}
+
+    \input{text-04-zamysleni}
+
+    %%% Závěr
+    \input{text-05-zaver}
+
+    \printbibliography[title=Použitá Literatura]
+    \addcontentsline{toc}{section}{Použitá Literatura}
+
+    \listoffigures
+    \addcontentsline{toc}{section}{Seznam obrázků}
+
+    \listoftables
+    \addcontentsline{toc}{section}{Seznam tabulek}
+
+    \listoflistedequation
+    \addcontentsline{toc}{section}{Seznam rovnic}
+
+\end{document}
